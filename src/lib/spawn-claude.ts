@@ -68,11 +68,19 @@ export interface PromptClaudeOptions {
  * One-shot, non-interactive Claude Code call (`claude --print`). Captures
  * stdout and resolves with the trimmed response. Use this when vibe needs a
  * structured answer from the model rather than handing the terminal over.
+ *
+ * BLUEPRINT §15: 무한 루프/비용 폭주 안전망. promptClaude는 --print 전용이라
+ * --max-budget-usd 가 동작한다 (인터랙티브 spawnClaude에는 옵션 자체가 없음).
+ * 정상 호출은 $0.05 미만이라 $1은 안전망 의미.
  */
+const PROMPT_MAX_BUDGET_USD = "1";
+
 export function promptClaude(prompt: string, opts: PromptClaudeOptions = {}): Promise<string> {
   const args = [
     "--dangerously-skip-permissions",
     "--print",
+    "--max-budget-usd",
+    PROMPT_MAX_BUDGET_USD,
     ...(opts.extraArgs ?? []),
     prompt,
   ];

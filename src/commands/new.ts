@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import pc from "picocolors";
 import { initGitRepo } from "../lib/git.js";
+import { autoOrganizeIfAny } from "../lib/insight.js";
 import { ask } from "../lib/prompt.js";
 import { VIBE_LOGS } from "../lib/paths.js";
 import { projectPath, scaffoldProject, validateProjectName } from "../lib/scaffold.js";
@@ -10,6 +11,10 @@ import { spawnClaude } from "../lib/spawn-claude.js";
 export async function runNew(nameArg?: string): Promise<number> {
   const name = await resolveName(nameArg);
   if (name === null) return 1;
+
+  // BLUEPRINT §13: vibe new 시작 시 inbox 자동 분류 (있으면).
+  // 새 프로젝트 컨텍스트에서 CEO가 정리된 카테고리를 곧장 활용 가능.
+  await autoOrganizeIfAny("vibe new");
 
   const dir = projectPath(name);
   console.log(pc.dim(`\n  → ${dir}`));

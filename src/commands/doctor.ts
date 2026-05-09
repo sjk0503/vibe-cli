@@ -2,6 +2,7 @@ import { appendFileSync, existsSync, readFileSync, statSync, writeFileSync } fro
 import { execSync } from "node:child_process";
 import { join } from "node:path";
 import pc from "picocolors";
+import { autoOrganizeIfAny } from "../lib/insight.js";
 import { computeBaseline, detectDrift, type BaselineHashes, type DriftEntry } from "../lib/integrity.js";
 import {
   DESIGN_ROOT,
@@ -38,6 +39,9 @@ function isDir(path: string): boolean {
 }
 
 export async function runDoctor(): Promise<number> {
+  // BLUEPRINT §13: vibe doctor 시점에도 inbox 자동 분류.
+  await autoOrganizeIfAny("vibe doctor");
+
   const checks: Check[] = [];
 
   // 1. Claude Code CLI — BLUEPRINT §4 hard requirement
