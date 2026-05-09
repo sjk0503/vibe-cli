@@ -35,15 +35,74 @@ vibe doctor   # 환경 점검
 
 ## 명령어 (총 5개, 고정)
 
-| 명령어 | 역할 |
-|---|---|
-| `vibe new [name]` | 새 프로젝트 시작. `~/dev/<name>/`에 scaffold + git(main/develop) + CEO 세션 시동 |
-| `vibe resume [name]` | 중단된 프로젝트를 마지막 상태에서 이어감 (목록에서 선택 가능) |
-| `vibe ship` | 배포 체크리스트 (랜딩·SEO·결제·분석·약관·env). 미충족이어도 차단 안 함 |
-| `vibe insight [organize]` | `~/dev/insight/inbox/` 자료를 자동으로 카테고리 분류 |
-| `vibe doctor [accept]` | 환경 점검 + §17.3 지침 헬스체크. `accept`로 변경 인정 + CHANGELOG 기록 |
+| 명령어 | 역할 | 서브명령 |
+|---|---|---|
+| `vibe new [name]` | 새 프로젝트 시작 | — |
+| `vibe resume [name]` | 중단된 프로젝트 이어가기 | — |
+| `vibe ship` | 배포 체크리스트 | — |
+| `vibe insight` | 글로벌 인사이트 폴더 관리 | `organize` |
+| `vibe doctor` | 환경 점검 + 지침 헬스체크 | `accept` |
 
-명령어는 5개로 고정이다 (BLUEPRINT §6). 새 기능은 위 명령어의 sub-option으로 흡수한다.
+명령어는 **5개로 고정** (BLUEPRINT §6). 신기능은 위 명령어의 **서브명령**으로 흡수한다 — 6번째 top-level 명령은 추가하지 않는다.
+
+각 명령어의 sub-command 목록은 항상 `vibe <명령어> --help`로 확인할 수 있다.
+
+### `vibe new [name]`
+
+새 프로젝트 시작.
+
+- **인자**: `name` (선택). 생략하면 prompt로 묻는다. 형식 `^[a-z0-9][a-z0-9-]{0,49}$` (소문자/숫자로 시작, 50자 이내).
+- **동작 순서**:
+  1. `~/dev/<name>/` 생성 (이미 있으면 거부)
+  2. `~/dev/insight/inbox/`, `~/dev/design/`이 없으면 같이 생성 (멱등)
+  3. CEO 페르소나(`CLAUDE.md`), 5팀장 정의(`.claude/agents/*.md`), 인사이트 심볼릭 링크(`.claude/skills` → `~/dev/insight`) 셋업
+  4. `BLUEPRINT.md` placeholder + `.vibe/{state.json,CHANGELOG.md,SUGGESTIONS.md,logs/}` 생성. baseline hash가 `state.json`에 박제됨 (§17.3)
+  5. `git init` + `main` 브랜치 + 첫 커밋 + `develop` 분기·체크아웃
+  6. CEO 세션 시동 (`claude --dangerously-skip-permissions`) — cwd가 새 프로젝트라 CEO 페르소나가 자동 주입됨
+
+### `vibe resume [name]`
+
+중단된 프로젝트를 마지막 상태에서 이어감.
+
+- **인자**: `name` (선택)
+  - 줬는데 그 프로젝트가 없으면 → `프로젝트 없음: <name>` + `exit 1`
+  - 안 줬으면 → `~/dev/*` 중 `.vibe/state.json`을 가진 프로젝트들을 createdAt 내림차순으로 나열, 번호 또는 이름으로 선택
+  - 목록이 1개뿐이면 자동 선택 (선택 단계 생략)
+  - 목록이 비어있으면 → `재개할 vibe 프로젝트가 없습니다` + `exit 1`
+- **동작**: 선택된 프로젝트 디렉토리에서 CEO 세션 시동. CEO가 `state.json` / `git log` / 마지막 phase를 읽고 어디서부터 이어갈지 판단한다.
+
+### `vibe ship`
+
+배포 직전 수익화 체크리스트 (BLUEPRINT §16).
+
+- **인자 없음.** cwd가 vibe 프로젝트(`package.json`+`next` 또는 `pubspec.yaml`)여야 함. 아니면 "스택 unknown"으로 종료.
+- **검사 항목** (웹 기준): 랜딩 페이지, SEO 메타 태그, 결제(Toss/Stripe) 의존성, 분석(PostHog), 약관/개인정보처리방침 라우트, 환경변수 정의(`.env.example`)
+- **결과 표기**: `✓` 통과 / `?` 수동 확인 필요 / `✗` 미충족
+- **차단하지 않음** — `✗`가 있어도 안내만. 마지막에 `git checkout main && git merge develop && git push` 명령어를 출력해 사용자가 직접 실행하도록 한다 (main 푸시 = 배포 트리거, 컨펌 필수).
+
+### `vibe insight`
+
+글로벌 인사이트 폴더(`~/dev/insight/`) 관리.
+
+- `vibe insight` (단독) → 사용법 안내 출력
+- `vibe insight organize` → `~/dev/insight/inbox/`의 모든 파일을 `claude --print`에 보내 카테고리 폴더로 자동 분류·이동
+  - 적합한 기존 카테고리가 있으면 거기로
+  - 없으면 새 카테고리 폴더 자동 생성 (영문 소문자, 예: `apis/`, `oss/`, `pitfalls/`)
+  - 같은 이름 충돌 시 skip (덮어쓰기 안 함)
+  - inbox가 비어있으면 no-op
+- 결과로 이동/새 카테고리/skip 항목을 한 번에 보여준다.
+
+### `vibe doctor`
+
+환경 점검 + 지침 헬스체크.
+
+- `vibe doctor` (단독)
+  - 환경: `claude` CLI / Node ≥ 20 / `git` / `~/dev/insight[/inbox]` / `~/dev/design` / `BLUEPRINT.md`
+  - 지침 헬스체크 (vibe 프로젝트 안에서만): `state.json.baseline`과 현재 파일 hash를 비교해 변경된 파일을 **CORE / PRESET 카테고리로 나눠** 출력
+- `vibe doctor accept`
+  - 위 drift 항목들을 다시 보여주고 변경 사유를 한 줄 입력받음 (**빈 입력 거부** — §17 안전장치 #2)
+  - `.vibe/CHANGELOG.md`에 `- YYYY-MM-DD: <사유>\n  └ <변경 파일 목록>` 형식으로 한 줄 추가
+  - `state.json.baseline`을 현재 hash로 갱신 → 다음 `vibe doctor`에서 drift 사라짐
 
 ---
 
@@ -137,9 +196,3 @@ vibe doctor accept
 | `vibe new` 시작 직후 `Error: Input must be provided either through stdin...` | 터미널이 TTY가 아닐 때 (pipe 등). 일반 터미널에서 직접 실행. |
 | 같은 에러로 에이전트가 막힘 | `.vibe/logs/<timestamp>-*.log` 확인 (BLUEPRINT §15). |
 | `~/dev/insight` 카테고리가 마음에 안 듦 | 직접 `mv`로 옮기면 됨. 정답은 없음. |
-
----
-
-## 라이선스 / 배포
-
-개인용 도구. 일반 공개 배포 안 함 (BLUEPRINT §3). 친구에게 공유하려면 이 레포 clone + `npm link`까지 안내. `~/dev/insight/`와 `~/dev/design/`은 각자의 자료 공간이라 따로 채워야 한다.
