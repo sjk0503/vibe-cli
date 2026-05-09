@@ -121,6 +121,39 @@ interface OrganizeResult {
   skipped: string[];
 }
 
+/**
+ * BLUEPRINT §13: vibe new / vibe doctor 실행 시 자동으로 inbox 분류.
+ * 비어있으면 조용히 skip, 자료가 있을 때만 한 줄 보고. 실패해도 호출자 흐름을 막지 않음.
+ */
+export async function autoOrganizeIfAny(label: "vibe new" | "vibe doctor"): Promise<void> {
+  const filenames = listInboxFiles();
+  if (filenames.length === 0) return;
+
+  // picocolors는 호출자가 가져왔을 거지만 여기서 직접 import하지 않고 평문으로 둔다.
+  console.log(`\n  [${label}] inbox에 ${filenames.length}개 자료 발견 — 자동 분류 중...`);
+
+  let result: OrganizeResult;
+  try {
+    result = await organizeInbox();
+  } catch (e) {
+    console.warn(`  (자동 분류 실패, 무시하고 계속: ${(e as Error).message})`);
+    return;
+  }
+
+  if (result.moved.length > 0) {
+    for (const m of result.moved) {
+      console.log(`    → ${m.file}  →  ${m.category}/`);
+    }
+  }
+  if (result.newCategories.length > 0) {
+    console.log(`    새 카테고리: ${result.newCategories.join(", ")}`);
+  }
+  if (result.skipped.length > 0) {
+    console.log(`    건너뜀: ${result.skipped.length}개`);
+  }
+  console.log();
+}
+
 export async function organizeInbox(): Promise<OrganizeResult> {
   const filenames = listInboxFiles();
   if (filenames.length === 0) {
