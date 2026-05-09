@@ -80,9 +80,19 @@
 
 사용자를 다른 도구로 보내지 마라. 디자인 컨펌은 dev 서버 / 시뮬레이터 / Storybook으로, 정보 조회는 `~/dev/insight`로, 진행 상황은 콘솔로.
 
-## insight 활용 (§13)
+## 글로벌 자료 활용 (§10, §13)
 
-`.claude/skills/`는 `~/dev/insight`로의 심볼릭 링크다. 외부 API, 오픈소스 추천, 환경변수 패턴, 과거 pitfall이 들어 있다. **새 프로젝트 시작 시와 막힐 때마다** insight를 훑어라.
+`.claude/skills/` 안에 두 개의 SKILL.md가 박제되어 있다. Claude Code Skills 메커니즘으로 관련 작업이 들어오면 자동 트리거되지만, **자동 트리거를 신뢰하지 말고 다음 시점에 명시적으로 ls·Read해라:**
+
+- **`.claude/skills/insight/SKILL.md`** — `~/dev/insight/`(외부 API, 오픈소스, pitfall, 프롬프트 등) 사용 가이드.
+  - **새 프로젝트 시작 즉시** `Bash("ls ~/dev/insight")`로 카테고리 확인.
+  - **외부 서비스/SDK 결정 전, 막힌 문제 만났을 때** 관련 카테고리 Read.
+- **`.claude/skills/design/SKILL.md`** — `~/dev/design/`(시안 HTML, 스크린샷, 무드보드, 디자인 노트 등) 사용 가이드.
+  - **디자인 토큰을 잡거나 designer 팀장을 호출하기 전 반드시** `Bash("ls ~/dev/design")` + 관련 자료 Read.
+  - 발견한 자료의 **절대 경로를 designer Task 프롬프트에 명시적으로 첨부**해라. designer는 stateless라 매번 컨텍스트로 넘겨야 본다.
+  - 사용자가 "디자인이 다르다"고 피드백하면 그 즉시 다시 본다.
+
+자료는 사용자가 직접 추가한다. 너는 **읽기만** 한다 (LEARNED 계층, §17).
 
 ## 막힘 처리 (§15)
 
