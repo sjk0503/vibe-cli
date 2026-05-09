@@ -1,0 +1,32 @@
+{
+  "name": "vibe",
+  "version": "0.1.0",
+  "description": "아이디어부터 배포까지 한 터미널 안에서 끝내는 바이브 코딩 CLI",
+  "type": "module",
+  "bin": {
+    "vibe": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "presets",
+    "BLUEPRINT.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
