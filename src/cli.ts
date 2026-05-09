@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { runDoctor, runDoctorAccept } from "./commands/doctor.js";
+import { runDoctor, runDoctorAccept, runDoctorUpdate } from "./commands/doctor.js";
 import { runInsightHelp, runInsightOrganize } from "./commands/insight.js";
 import { runNew } from "./commands/new.js";
 import { runResume } from "./commands/resume.js";
@@ -51,5 +51,10 @@ doctor
   .command("accept")
   .description("지침 변경을 인정하고 사유를 .vibe/CHANGELOG.md에 기록 + baseline 갱신")
   .action(async () => process.exit(await runDoctorAccept()));
+
+doctor
+  .command("update")
+  .description("vibe 본체를 origin/main 최신으로 업데이트 (main 브랜치 + ff-only)")
+  .action(async () => process.exit(await runDoctorUpdate()));
 
 program.parseAsync(process.argv);
