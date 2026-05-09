@@ -12,6 +12,14 @@ import {
   VIBE_STATE,
 } from "../lib/paths.js";
 import { ask } from "../lib/prompt.js";
+import {
+  countBehindOriginMain,
+  currentBranch,
+  isGitRepo,
+  runUpdate,
+  tryFetchOriginMain,
+  VIBE_PACKAGE_DIR,
+} from "../lib/self-update.js";
 
 interface Check {
   name: string;
@@ -132,6 +140,9 @@ export async function runDoctor(): Promise<number> {
     renderInstructionDrift(process.cwd());
   }
 
+  // vibe 본체 업데이트 가능 여부 (§17 안전장치 #1: vibe 자체 git 레포 추적)
+  renderUpdateNotice();
+
   console.log();
   if (failed === 0) {
     console.log(pc.green("All checks passed."));
@@ -186,6 +197,38 @@ function renderInstructionDrift(cwd: string): void {
   }
 
   console.log(pc.dim("      변경을 인정하고 사유를 기록하려면: vibe doctor accept"));
+}
+
+/**
+ * vibe 본체가 origin/main보다 뒤져있으면 한 줄 알림. 네트워크/git 없으면 silent.
+ * 현재 브랜치가 main일 때만 알림 — develop에서 작업 중인 vibe 개발자는 main과
+ * 자연스레 차이가 있어 알림이 noise.
+ */
+function renderUpdateNotice(): void {
+  if (!isGitRepo(VIBE_PACKAGE_DIR)) return;
+  if (currentBranch(VIBE_PACKAGE_DIR) !== "main") return;
+  tryFetchOriginMain(VIBE_PACKAGE_DIR);
+  const behind = countBehindOriginMain(VIBE_PACKAGE_DIR);
+  if (behind === null || behind === 0) return;
+  console.log();
+  console.log(pc.yellow(`  ⚠ vibe 업데이트 가능 — origin/main이 ${behind} 커밋 앞섭니다.`));
+  console.log(pc.dim(`      → vibe doctor update`));
+}
+
+export async function runDoctorUpdate(): Promise<number> {
+  console.log(pc.dim(`vibe 패키지: ${VIBE_PACKAGE_DIR}\n`));
+  const result = runUpdate(VIBE_PACKAGE_DIR);
+  if (!result.ok) {
+    console.error(pc.red(result.message));
+    return 1;
+  }
+  console.log();
+  console.log(pc.green(`✓ ${result.message}`));
+  console.log();
+  console.log(pc.dim("기존 프로젝트(예: ~/dev/<project>/)의 CLAUDE.md / .claude/agents·skills 를"));
+  console.log(pc.dim("새 버전으로 마이그하려면 각 프로젝트에서 수동으로 cp + vibe doctor accept 하세요."));
+  console.log(pc.dim("이건 의도적으로 자동화하지 않습니다 — 작업 중 prompt가 자기도 모르게 바뀌면 위험."));
+  return 0;
 }
 
 /**
