@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { computeBaseline } from "./integrity.js";
 import {
@@ -8,14 +8,13 @@ import {
   DESIGN_ROOT,
   DEV_ROOT,
   INSIGHT_INBOX,
-  INSIGHT_ROOT,
   VIBE_CHANGELOG,
   VIBE_DIR,
   VIBE_LOGS,
   VIBE_STATE,
   VIBE_SUGGESTIONS,
 } from "./paths.js";
-import { PRESETS_AGENTS_DIR, PRESETS_CLAUDE_MD } from "./presets.js";
+import { PRESETS_AGENTS_DIR, PRESETS_CLAUDE_MD, PRESETS_SKILLS_DIR } from "./presets.js";
 
 const PROJECT_NAME_RE = /^[a-z0-9][a-z0-9-]{0,49}$/;
 
@@ -64,8 +63,11 @@ export function scaffoldProject(name: string): ScaffoldResult {
   // Copy team-lead subagent definitions (presets/agents/* → <project>/.claude/agents/*)
   cpSync(PRESETS_AGENTS_DIR, join(dir, CLAUDE_AGENTS), { recursive: true });
 
-  // Symlink ~/dev/insight → <project>/.claude/skills (BLUEPRINT §13)
-  symlinkSync(INSIGHT_ROOT, join(dir, CLAUDE_SKILLS), "dir");
+  // BLUEPRINT §13: Claude Code Skills 자동 트리거를 위한 SKILL.md 박제.
+  // .claude/skills/insight/SKILL.md → ~/dev/insight 사용 가이드
+  // .claude/skills/design/SKILL.md → ~/dev/design 사용 가이드
+  // 자료 자체는 ~/dev/insight 와 ~/dev/design 에 그대로 두고, SKILL.md가 진입점 역할.
+  cpSync(PRESETS_SKILLS_DIR, join(dir, CLAUDE_SKILLS), { recursive: true });
 
   // BLUEPRINT placeholder — CEO/planner will fill this during the conversation.
   writeFileSync(

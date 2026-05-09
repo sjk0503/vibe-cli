@@ -11,3 +11,4 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const PRESETS_DIR = resolve(here, "../../presets");
 export const PRESETS_CLAUDE_MD = resolve(PRESETS_DIR, "CLAUDE.md");
 export const PRESETS_AGENTS_DIR = resolve(PRESETS_DIR, "agents");
+export const PRESETS_SKILLS_DIR = resolve(PRESETS_DIR, "skills");
