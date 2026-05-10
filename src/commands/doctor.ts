@@ -4,6 +4,7 @@ import { join } from "node:path";
 import pc from "picocolors";
 import { autoOrganizeIfAny } from "../lib/insight.js";
 import { computeBaseline, detectDrift, type BaselineHashes, type DriftEntry } from "../lib/integrity.js";
+import { installSystemPresets } from "../lib/system-install.js";
 import {
   DESIGN_ROOT,
   INSIGHT_INBOX,
@@ -47,6 +48,9 @@ function isDir(path: string): boolean {
 }
 
 export async function runDoctor(): Promise<number> {
+  // BLUEPRINT §10 (v3): 시스템 prompts 박제 (멱등, 매 호출마다 동기화 보장).
+  installSystemPresets();
+
   // BLUEPRINT §13: vibe doctor 시점에도 inbox 자동 분류.
   await autoOrganizeIfAny("vibe doctor");
 
@@ -222,12 +226,11 @@ export async function runDoctorUpdate(): Promise<number> {
     console.error(pc.red(result.message));
     return 1;
   }
+  // 빌드 후 새 presets를 ~/.claude/에 동기화 — 모든 프로젝트가 다음 호출부터 인식.
+  installSystemPresets();
   console.log();
   console.log(pc.green(`✓ ${result.message}`));
-  console.log();
-  console.log(pc.dim("기존 프로젝트(예: ~/dev/<project>/)의 CLAUDE.md / .claude/agents·skills 를"));
-  console.log(pc.dim("새 버전으로 마이그하려면 각 프로젝트에서 수동으로 cp + vibe doctor accept 하세요."));
-  console.log(pc.dim("이건 의도적으로 자동화하지 않습니다 — 작업 중 prompt가 자기도 모르게 바뀌면 위험."));
+  console.log(pc.dim("~/.claude/agents·skills 동기화 완료 — 모든 vibe 프로젝트가 다음 호출부터 새 가이드를 인식합니다."));
   return 0;
 }
 

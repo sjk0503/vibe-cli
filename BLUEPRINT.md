@@ -129,27 +129,34 @@ vibe ship → 수익화 체크리스트 → 배포
 ---
 
 ## 10. 디렉토리 구조 (고정)
+~/.claude/                  # vibe가 관리하는 시스템 prompts (vibe doctor update로 갱신)
+├── agents/                 # 팀장 5명 (planner/designer/frontend/backend/qa)
+└── skills/                 # insight, design SKILL.md
+(CEO 페르소나는 spawn 시 --append-system-prompt로 주입. 사용자 ~/.claude/CLAUDE.md 안 건드림.)
+
 ~/dev/
-├── <프로젝트명>/        # vibe new로 생성되는 프로젝트들
-│   ├── BLUEPRINT.md      # 프로젝트 기획서
-│   ├── .vibe/            # vibe 메타데이터
-│   │   ├── state.json    # 진행 상태 (resume용)
-│   │   ├── CHANGELOG.md  # 지침 변경 기록
-│   │   ├── SUGGESTIONS.md# vibe가 제안하는 개선사항 누적
-│   │   └── logs/         # 에러 로그
-│   ├── .claude/          # Claude Code 지침
-│   │   ├── agents/       # 팀장 5명 정의
-│   │   └── skills/       # insight 자동 주입
+├── <프로젝트명>/            # vibe가 만든 결과물 (모터를 참조만)
+│   ├── BLUEPRINT.md        # 프로젝트 헌법 (planner가 채움)
+│   ├── .vibe/              # 프로젝트 메타데이터
+│   │   ├── state.json      # 진행 상태 + baseline (BLUEPRINT.md만 추적)
+│   │   ├── CHANGELOG.md    # BLUEPRINT 변경 기록
+│   │   ├── SUGGESTIONS.md  # vibe가 떠올린 개선 누적
+│   │   └── logs/           # 에러 로그
+│   ├── .claude/            # 옵션 override만 (보통 비어있음. 그 프로젝트만의 customize 필요시 작성)
 │   └── (실제 프로젝트 파일들)
 │
-├── insight/              # 글로벌 지식 베이스
-│   ├── inbox/            # 분류 안 된 자료 (사용자가 막 던지는 곳)
+├── insight/                # 글로벌 지식 베이스 (LEARNED, 자유 누적)
+│   ├── inbox/              # 분류 안 된 자료 (사용자가 막 던지는 곳)
 │   └── (자동 분류된 카테고리들)
 │
-└── design/               # 글로벌 디자인 레퍼런스
+└── design/                 # 글로벌 디자인 레퍼런스 (LEARNED)
 
 
 경로는 고정이다. 환경 설정으로 바꿀 수 없다.
+
+vibe presets는 `~/.claude/`에 시스템으로 설치되며 모든 프로젝트가 참조한다.
+`vibe doctor update`로 vibe 본체를 갱신하면 모든 프로젝트가 다음 호출부터 즉시 새 가이드를 인식한다.
+프로젝트의 `.claude/`는 그 프로젝트만의 override가 필요할 때만 명시적으로 작성한다.
 
 ---
 
@@ -212,8 +219,9 @@ PRESET이므로 사용자 컨펌 후 수정 가능하다.
 - 새 프로젝트 시작 시 CEO가 inbox + 분류된 카테고리 모두 훑어봄
 
 ### 자동 주입
-- 프로젝트 생성 시 `~/dev/insight`를 프로젝트의 `.claude/skills/`에 심볼릭 링크
-- Claude Code의 Skills 기능이 필요 시 자동으로 트리거
+- vibe 설치/업데이트 시 `~/.claude/skills/insight/SKILL.md`가 `~/dev/insight` 위치를 안내한다.
+- 마찬가지로 `~/.claude/skills/design/SKILL.md`가 `~/dev/design` 위치를 안내한다.
+- 별도 프로젝트별 셋업 없음. Claude Code의 Skills 기능이 글로벌 SKILL.md를 자동 인식한다.
 
 ---
 

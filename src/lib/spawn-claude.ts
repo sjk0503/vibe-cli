@@ -1,5 +1,7 @@
 import { spawn, type SpawnOptions } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { writeLog } from "./log.js";
+import { PRESETS_CLAUDE_MD } from "./presets.js";
 
 /**
  * BLUEPRINT §4 / §12-1: vibe never links the Claude Code SDK. It always shells
@@ -19,9 +21,23 @@ export interface SpawnClaudeOptions {
   logDir?: string;
 }
 
-/** Interactive Claude Code session. stdio is inherited. */
+/** vibe CEO 페르소나를 spawn 시점에 주입 (사용자 ~/.claude/CLAUDE.md 안 건드림). */
+function ceoPersona(): string {
+  try {
+    return readFileSync(PRESETS_CLAUDE_MD, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+/** Interactive Claude Code session. stdio is inherited. CEO persona 자동 주입. */
 export function spawnClaude(opts: SpawnClaudeOptions = {}): Promise<number> {
-  const args = ["--dangerously-skip-permissions", ...(opts.extraArgs ?? [])];
+  const persona = ceoPersona();
+  const args = ["--dangerously-skip-permissions"];
+  if (persona) {
+    args.push("--append-system-prompt", persona);
+  }
+  args.push(...(opts.extraArgs ?? []));
   if (opts.prompt !== undefined) args.push(opts.prompt);
 
   const spawnOpts: SpawnOptions = {
