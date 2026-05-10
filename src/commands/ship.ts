@@ -1,4 +1,5 @@
 import pc from "picocolors";
+import { generateLegalPages, type LegalFlagOverrides } from "../lib/legal.js";
 import { runShipChecks } from "../lib/ship-check.js";
 
 export async function runShip(): Promise<number> {
@@ -48,5 +49,32 @@ export async function runShip(): Promise<number> {
   console.log("  git checkout main && git merge develop && git push");
   console.log(pc.dim("  └ main 푸시 = 배포 트리거 (Vercel 등)"));
 
+  return 0;
+}
+
+/**
+ * BLUEPRINT §16: 한국 서비스용 ToS / 개인정보처리방침 baseline 자동 생성.
+ * AI 호출 없이 정적 템플릿 + 변수 치환 (법률 문서 hallucination 방지).
+ * 결과물 상단에 "법무 검토 필수" 면책 박제.
+ */
+export async function runShipLegal(flags: LegalFlagOverrides = {}): Promise<number> {
+  console.log(pc.bold("\nvibe ship legal — ToS / 개인정보처리방침 baseline 생성"));
+  console.log(pc.yellow("⚠ 법무 검토 필수. 변호사 검토 없이 그대로 사용하지 마세요."));
+
+  const result = await generateLegalPages(flags);
+  if (!result) return 1;
+
+  console.log();
+  if (result.written.length > 0) {
+    console.log(pc.green("작성됨:"));
+    for (const f of result.written) console.log(`  ${pc.green("✓")} ${f}`);
+  }
+  if (result.skipped.length > 0) {
+    console.log(pc.dim("\n건너뜀:"));
+    for (const f of result.skipped) console.log(`  ${pc.dim("·")} ${f}`);
+  }
+  console.log();
+  console.log(pc.dim("이제 vibe ship 체크리스트의 \"약관 / 개인정보처리방침\" 항목이 통과합니다."));
+  console.log(pc.yellow("배포 전 변호사 검토를 받으세요."));
   return 0;
 }

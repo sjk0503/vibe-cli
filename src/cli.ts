@@ -4,7 +4,7 @@ import { runDoctor, runDoctorAccept, runDoctorUpdate } from "./commands/doctor.j
 import { runInsightHelp, runInsightOrganize } from "./commands/insight.js";
 import { runNew } from "./commands/new.js";
 import { runResume } from "./commands/resume.js";
-import { runShip } from "./commands/ship.js";
+import { runShip, runShipLegal } from "./commands/ship.js";
 
 // BLUEPRINT §6: exactly five commands, forever. New capabilities must be
 // absorbed as sub-options of an existing command.
@@ -27,10 +27,32 @@ program
   .argument("[name]", "프로젝트 이름 (생략 시 목록에서 선택)")
   .action(async (name?: string) => process.exit(await runResume(name)));
 
-program
+const ship = program
   .command("ship")
   .description("배포 준비 및 실행 (수익화 체크리스트 포함)")
   .action(async () => process.exit(await runShip()));
+
+ship
+  .command("legal")
+  .description("한국 서비스용 ToS / 개인정보처리방침 baseline 자동 생성 (법무 검토 필수)")
+  .option("--service-name <name>", "서비스명")
+  .option("--operator <name>", "운영자(개인명/회사명)")
+  .option("--contact <contact>", "연락처(이메일 등)")
+  .option("--data-items <items>", "수집하는 개인정보 항목 (쉼표 구분)")
+  .option("--effective-date <yyyy-mm-dd>", "시행일 (기본: 오늘)")
+  .option("-y, --yes", "이미 있는 파일 덮어쓰기 자동 yes")
+  .action(async (opts) =>
+    process.exit(
+      await runShipLegal({
+        serviceName: opts.serviceName,
+        operator: opts.operator,
+        contact: opts.contact,
+        dataItems: opts.dataItems,
+        effectiveDate: opts.effectiveDate,
+        yes: opts.yes,
+      }),
+    ),
+  );
 
 const insight = program
   .command("insight")

@@ -1,17 +1,29 @@
-import { createInterface } from "node:readline/promises";
+import { createInterface, type Interface } from "node:readline/promises";
 
 /**
- * Lightweight readline-based prompt. Resolves to trimmed input.
- * Returns null if stdin closes (Ctrl-D / piped empty input).
+ * 모듈 singleton readline. 매 호출마다 createInterface + close하면 stdin이
+ * 닫혀서 두 번째 ask부터 EOF로 null만 받음. 한 번 만들고 process가 끝날 때
+ * 자연 정리되게 둔다 (commands는 process.exit으로 종료).
  */
+let rl: Interface | null = null;
+
+function getRl(): Interface {
+  if (!rl) rl = createInterface({ input: process.stdin, output: process.stdout });
+  return rl;
+}
+
+/** Trimmed input. Returns null on stdin close (Ctrl-D / piped empty). */
 export async function ask(question: string): Promise<string | null> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    const answer = await rl.question(question);
+    const answer = await getRl().question(question);
     return answer.trim();
   } catch {
     return null;
-  } finally {
-    rl.close();
   }
+}
+
+/** Optionally call before process.exit if you want deterministic cleanup. */
+export function closePrompt(): void {
+  rl?.close();
+  rl = null;
 }
