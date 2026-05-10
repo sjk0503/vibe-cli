@@ -1,5 +1,6 @@
 import pc from "picocolors";
 import { generateLegalPages, type LegalFlagOverrides } from "../lib/legal.js";
+import { runSeo, type SeoFlagOverrides } from "../lib/seo.js";
 import { runShipChecks } from "../lib/ship-check.js";
 
 export async function runShip(): Promise<number> {
@@ -76,5 +77,44 @@ export async function runShipLegal(flags: LegalFlagOverrides = {}): Promise<numb
   console.log();
   console.log(pc.dim("이제 vibe ship 체크리스트의 \"약관 / 개인정보처리방침\" 항목이 통과합니다."));
   console.log(pc.yellow("배포 전 변호사 검토를 받으세요."));
+  return 0;
+}
+
+/**
+ * BLUEPRINT §16 + §18 v2-D: SEO 자동 점검 + sitemap/robots 자동 생성.
+ * OG meta·favicon은 layout/자료 영역이라 자동 수정 안 함 (안내만).
+ */
+export async function runShipSeo(flags: SeoFlagOverrides = {}): Promise<number> {
+  console.log(pc.bold("\nvibe ship seo — SEO 점검 + 자동 생성 가능 항목 처리"));
+
+  const result = await runSeo(flags);
+  if (!result) return 1;
+
+  console.log();
+  console.log(pc.bold("점검:"));
+  for (const c of result.checks) {
+    let mark: string;
+    if (c.status === "ok") mark = pc.green("✓");
+    else if (c.status === "manual") mark = pc.yellow("?");
+    else mark = pc.red("✗");
+    const detail = c.detail ? pc.dim(`  — ${c.detail}`) : "";
+    console.log(`  ${mark} ${c.name}${detail}`);
+  }
+
+  if (result.generated.length > 0) {
+    console.log();
+    console.log(pc.green("자동 생성:"));
+    for (const p of result.generated) console.log(`  ${pc.green("✓")} ${p}`);
+  }
+  if (result.skipped.length > 0) {
+    console.log();
+    console.log(pc.dim("건너뜀:"));
+    for (const p of result.skipped) console.log(`  ${pc.dim("·")} ${p}`);
+  }
+
+  console.log();
+  console.log(pc.dim("OpenGraph 메타·favicon은 안전상 자동 수정 안 합니다."));
+  console.log(pc.dim("- OG: app/layout.tsx의 metadata에 openGraph 키 직접 추가"));
+  console.log(pc.dim("- favicon: app/icon.{png,svg} 또는 public/favicon.ico 직접 배치"));
   return 0;
 }

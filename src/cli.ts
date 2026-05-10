@@ -4,7 +4,7 @@ import { runDoctor, runDoctorAccept, runDoctorUpdate } from "./commands/doctor.j
 import { runInsightHelp, runInsightOrganize } from "./commands/insight.js";
 import { runNew } from "./commands/new.js";
 import { runResume } from "./commands/resume.js";
-import { runShip, runShipLegal } from "./commands/ship.js";
+import { runShip, runShipLegal, runShipSeo } from "./commands/ship.js";
 
 // BLUEPRINT §6: exactly five commands, forever. New capabilities must be
 // absorbed as sub-options of an existing command.
@@ -51,6 +51,17 @@ ship
         effectiveDate: opts.effectiveDate,
         yes: opts.yes,
       }),
+    ),
+  );
+
+ship
+  .command("seo")
+  .description("SEO 점검 + sitemap/robots 자동 생성 (OG·favicon은 안내만)")
+  .option("--site-url <url>", "사이트 URL (예: https://myapp.vercel.app)")
+  .option("-y, --yes", "이미 있는 파일 덮어쓰기 자동 yes")
+  .action(async (opts) =>
+    process.exit(
+      await runShipSeo({ siteUrl: opts.siteUrl, yes: opts.yes }),
     ),
   );
 
