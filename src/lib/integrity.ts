@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, relative } from "node:path";
-import { CLAUDE_AGENTS } from "./paths.js";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 export type BaselineHashes = Record<string, string | null>;
 
@@ -15,28 +14,15 @@ export function hashFile(absPath: string): string | null {
 }
 
 /**
- * Compute baseline hashes for the files vibe protects (§17.3 health check):
- * - BLUEPRINT.md (CORE)
- * - CLAUDE.md (CEO persona — PRESET)
- * - .claude/agents/*.md (team-lead prompts — PRESET)
+ * BLUEPRINT v3 모델: baseline은 BLUEPRINT.md만 추적한다.
+ * CLAUDE.md / .claude/agents·skills는 ~/.claude/ 시스템에서 오므로 프로젝트가
+ * 자기 복사본을 들고 있지 않다 (override만 옵션). 따라서 추적할 PRESET 파일이
+ * 프로젝트 단위에 없음.
  */
 export function computeBaseline(projectDir: string): BaselineHashes {
-  const baseline: BaselineHashes = {
+  return {
     "BLUEPRINT.md": hashFile(join(projectDir, "BLUEPRINT.md")),
-    "CLAUDE.md": hashFile(join(projectDir, "CLAUDE.md")),
   };
-
-  const agentsDir = join(projectDir, CLAUDE_AGENTS);
-  if (existsSync(agentsDir)) {
-    for (const entry of readdirSync(agentsDir, { withFileTypes: true })) {
-      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-      const abs = join(agentsDir, entry.name);
-      const rel = relative(projectDir, abs);
-      baseline[rel] = hashFile(abs);
-    }
-  }
-
-  return baseline;
 }
 
 export type DriftKind = "modified" | "deleted" | "added";

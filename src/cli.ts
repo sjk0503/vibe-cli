@@ -19,7 +19,10 @@ program
   .command("new")
   .description("새 프로젝트 시작 (기획 → 디자인 → 개발 → QA)")
   .argument("[name]", "프로젝트 이름 (~/dev/<name>/)")
-  .action(async (name?: string) => process.exit(await runNew(name)));
+  .option("--adopt", "기존 디렉토리(일반 프로젝트)를 vibe로 입양 (인자 있으면 ~/dev/<name>, 없으면 cwd)")
+  .action(async (name: string | undefined, opts: { adopt?: boolean }) =>
+    process.exit(await runNew(name, { adopt: opts.adopt })),
+  );
 
 program
   .command("resume")

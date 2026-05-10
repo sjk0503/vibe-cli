@@ -51,14 +51,22 @@ vibe doctor   # 환경 점검
 
 새 프로젝트 시작.
 
-- **인자**: `name` (선택). 생략하면 prompt로 묻는다. 형식 `^[a-z0-9][a-z0-9-]{0,49}$` (소문자/숫자로 시작, 50자 이내).
-- **동작 순서**:
-  1. `~/dev/<name>/` 생성 (이미 있으면 거부)
-  2. `~/dev/insight/inbox/`, `~/dev/design/`이 없으면 같이 생성 (멱등)
-  3. CEO 페르소나(`CLAUDE.md`), 5팀장 정의(`.claude/agents/*.md`), 인사이트 심볼릭 링크(`.claude/skills` → `~/dev/insight`) 셋업
-  4. `BLUEPRINT.md` placeholder + `.vibe/{state.json,CHANGELOG.md,SUGGESTIONS.md,logs/}` 생성. baseline hash가 `state.json`에 박제됨 (§17.3)
-  5. `git init` + `main` 브랜치 + 첫 커밋 + `develop` 분기·체크아웃
-  6. CEO 세션 시동 (`claude --dangerously-skip-permissions`) — cwd가 새 프로젝트라 CEO 페르소나가 자동 주입됨
+- **인자**: `name` (선택). 생략하면 prompt로 묻는다. 형식 `^[a-z0-9][a-z0-9-]{0,49}$`.
+- **옵션**: `--adopt` — 기존 디렉토리(일반 프로젝트)를 vibe로 입양. 인자 있으면 `~/dev/<name>`, 없으면 cwd.
+- **동작 순서 (기본, 새 프로젝트)**:
+  1. `~/.claude/agents·skills/` 시스템 prompts 동기화 (멱등)
+  2. inbox에 자료 있으면 자동 organize
+  3. `~/dev/<name>/` 생성 (이미 있으면 거부 — 입양은 `--adopt`로)
+  4. `~/dev/insight/inbox/`, `~/dev/design/` 없으면 같이 생성
+  5. `BLUEPRINT.md` placeholder + `.vibe/{state.json,CHANGELOG,SUGGESTIONS,logs/}` 생성. baseline hash는 BLUEPRINT.md만 추적
+  6. `git init` + `main` 브랜치 + 첫 커밋 + `develop` 분기·체크아웃
+  7. CEO 세션 시동 (`--append-system-prompt`로 CEO 페르소나 주입)
+- **동작 순서 (`--adopt`)**:
+  1. 시스템 prompts 동기화
+  2. 대상 디렉토리(`~/dev/<name>` 또는 cwd)가 존재해야 함
+  3. `.vibe/`, `.gitignore` 없으면 추가, 있으면 보존. `BLUEPRINT.md`도 없으면 placeholder, 있으면 보존
+  4. git이 없으면 `git init` + main + develop. 이미 git이면 develop만 보장
+  5. CEO 세션 시동 — "기존 코드부터 훑어달라"고 부탁해보면 자연스러움
 
 ### `vibe resume [name]`
 
@@ -126,32 +134,39 @@ SEO 점검 + 자동 생성 가능 항목 처리.
   - vibe 본체(이 레포)를 `origin/main` 최신으로 갱신
   - **현재 브랜치가 `main`이어야 동작** (다른 브랜치에서 강제 pull은 작업물 위험)
   - `git pull origin main --ff-only` + `npm install` (postinstall 훅이 자동 빌드)
-  - `vibe doctor` 실행 시 main 브랜치 + `behind > 0`이면 한 줄 알림이 떠서 사용자가 update 호출 시점을 인지 (develop 작업 중이면 silent)
-  - 기존 프로젝트 (`~/dev/<project>/`) 마이그레이션은 **자동 안 함** — 작업 중 prompt가 자기도 모르게 바뀌면 위험. 필요하면 각 프로젝트에서 `cp -R ~/dev/vibe/presets/* ...` + `vibe doctor accept` 수동
+  - **마지막에 `~/.claude/agents·skills/` 시스템 prompts 동기화** → 모든 vibe 프로젝트가 다음 호출부터 즉시 새 가이드 인식 (마이그 불필요)
+  - `vibe doctor` 실행 시 main 브랜치 + `behind > 0`이면 한 줄 알림 (develop 작업 중이면 silent)
 
 ---
 
 ## 디렉토리 구조 (고정)
 
 ```
+~/.claude/                  # vibe가 관리하는 시스템 prompts (vibe doctor update로 갱신)
+├── agents/                 # 5팀장 (planner/designer/frontend/backend/qa)
+└── skills/                 # insight, design SKILL.md
+                            # CEO 페르소나는 spawn 시 --append-system-prompt로 주입
+                            # 사용자 ~/.claude/CLAUDE.md 는 안 건드림
+
 ~/dev/
-├── <project>/            # vibe new로 생성되는 프로젝트들
-│   ├── BLUEPRINT.md      # 프로젝트 기획서
-│   ├── CLAUDE.md         # CEO 페르소나
-│   ├── .vibe/            # 메타 (state.json, CHANGELOG, SUGGESTIONS, logs/)
-│   ├── .claude/
-│   │   ├── agents/       # 5팀장 정의 (planner/designer/frontend/backend/qa)
-│   │   └── skills/       # → ~/dev/insight 심볼릭 링크
+├── <project>/              # vibe가 만든 결과물 — 시스템 prompts를 참조만
+│   ├── BLUEPRINT.md        # 프로젝트 헌법 (planner가 채움)
+│   ├── .vibe/              # 메타 (state.json, CHANGELOG, SUGGESTIONS, logs/)
+│   ├── .claude/            # 옵션 override만 (보통 비어있음)
 │   └── (실제 프로젝트 파일들)
 │
-├── insight/              # 글로벌 지식 베이스 (사용자 본인이 채움)
-│   ├── inbox/            # 분류 안 된 자료 — 그냥 떨어뜨리는 곳
+├── insight/                # 글로벌 지식 베이스 (사용자 본인이 채움)
+│   ├── inbox/              # 분류 안 된 자료 — 그냥 떨어뜨리는 곳
 │   └── (자동 분류된 카테고리들)
 │
-└── design/               # 글로벌 디자인 레퍼런스 (사용자 본인이 채움)
+└── design/                 # 글로벌 디자인 레퍼런스 (사용자 본인이 채움)
 ```
 
 **경로는 환경변수나 설정으로 바꿀 수 없다** (BLUEPRINT §10).
+
+vibe presets는 `~/.claude/`에 시스템으로 박제되며 모든 프로젝트가 *참조*만 한다 (자기 사본을 들지 않음). 그래서:
+- `vibe doctor update`로 vibe 본체를 갱신하면 모든 프로젝트가 다음 호출부터 즉시 새 가이드 인식 — **마이그레이션 불필요**
+- 프로젝트의 `.claude/`는 그 프로젝트만의 *override*가 필요할 때만 명시적으로 작성
 
 ---
 
