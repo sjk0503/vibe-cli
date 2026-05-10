@@ -12,3 +12,4 @@ export const PRESETS_DIR = resolve(here, "../../presets");
 export const PRESETS_CLAUDE_MD = resolve(PRESETS_DIR, "CLAUDE.md");
 export const PRESETS_AGENTS_DIR = resolve(PRESETS_DIR, "agents");
 export const PRESETS_SKILLS_DIR = resolve(PRESETS_DIR, "skills");
+export const PRESETS_LEGAL_DIR = resolve(PRESETS_DIR, "legal-templates");
