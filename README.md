@@ -39,9 +39,9 @@ vibe doctor   # 환경 점검
 |---|---|---|
 | `vibe new [name]` | 새 프로젝트 시작 | — |
 | `vibe resume [name]` | 중단된 프로젝트 이어가기 | — |
-| `vibe ship` | 배포 체크리스트 | — |
+| `vibe ship` | 배포 체크리스트 | `legal`, `seo` |
 | `vibe insight` | 글로벌 인사이트 폴더 관리 | `organize` |
-| `vibe doctor` | 환경 점검 + 지침 헬스체크 | `accept` |
+| `vibe doctor` | 환경 점검 + 지침 헬스체크 | `accept`, `update` |
 
 명령어는 **5개로 고정** (BLUEPRINT §6). 신기능은 위 명령어의 **서브명령**으로 흡수한다 — 6번째 top-level 명령은 추가하지 않는다.
 
@@ -80,6 +80,25 @@ vibe doctor   # 환경 점검
 - **결과 표기**: `✓` 통과 / `?` 수동 확인 필요 / `✗` 미충족
 - **차단하지 않음** — `✗`가 있어도 안내만. 마지막에 `git checkout main && git merge develop && git push` 명령어를 출력해 사용자가 직접 실행하도록 한다 (main 푸시 = 배포 트리거, 컨펌 필수).
 
+#### `vibe ship legal`
+
+한국 서비스용 이용약관 / 개인정보처리방침 baseline 자동 생성.
+
+- AI 호출 없이 **정적 템플릿 + 변수 치환** (법률 문서 hallucination 방지).
+- 인터랙티브 또는 플래그로 입력: `--service-name`, `--operator`, `--contact`, `--data-items`, `--effective-date`, `-y`(덮어쓰기 자동 yes)
+- App Router 자동 감지 → `app/terms/page.tsx`, `app/privacy/page.tsx` 작성
+- 결과물 상단·CLI 출력에 **"법무 검토 필수"** 면책 박제
+- 생성 후 `vibe ship` 체크리스트의 "약관 / 개인정보처리방침" 항목이 ✓로 통과
+
+#### `vibe ship seo`
+
+SEO 점검 + 자동 생성 가능 항목 처리.
+
+- **점검 4개**: sitemap, robots, OpenGraph 메타(layout.tsx), favicon
+- **자동 생성**: `app/sitemap.ts`, `app/robots.ts` (Next.js 15 App Router 형식). `--site-url <url>` 필요
+- **자동 생성 안 함**: OG meta는 layout 본 코드 위험, favicon은 사용자 자료 필요 — 직접 추가 안내만
+- 옵션: `--site-url`, `-y`
+
 ### `vibe insight`
 
 글로벌 인사이트 폴더(`~/dev/insight/`) 관리.
@@ -103,6 +122,12 @@ vibe doctor   # 환경 점검
   - 위 drift 항목들을 다시 보여주고 변경 사유를 한 줄 입력받음 (**빈 입력 거부** — §17 안전장치 #2)
   - `.vibe/CHANGELOG.md`에 `- YYYY-MM-DD: <사유>\n  └ <변경 파일 목록>` 형식으로 한 줄 추가
   - `state.json.baseline`을 현재 hash로 갱신 → 다음 `vibe doctor`에서 drift 사라짐
+- `vibe doctor update`
+  - vibe 본체(이 레포)를 `origin/main` 최신으로 갱신
+  - **현재 브랜치가 `main`이어야 동작** (다른 브랜치에서 강제 pull은 작업물 위험)
+  - `git pull origin main --ff-only` + `npm install` (postinstall 훅이 자동 빌드)
+  - `vibe doctor` 실행 시 main 브랜치 + `behind > 0`이면 한 줄 알림이 떠서 사용자가 update 호출 시점을 인지 (develop 작업 중이면 silent)
+  - 기존 프로젝트 (`~/dev/<project>/`) 마이그레이션은 **자동 안 함** — 작업 중 prompt가 자기도 모르게 바뀌면 위험. 필요하면 각 프로젝트에서 `cp -R ~/dev/vibe/presets/* ...` + `vibe doctor accept` 수동
 
 ---
 
