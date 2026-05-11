@@ -82,6 +82,7 @@ vibe doctor   # 환경 점검
   - `--resume [id]` — 특정 claude 세션 ID로 점프 (claude CLI와 동일 시그니처). ID 생략 시 picker.
   - 둘 다 안 주면 (기본) — **새 세션** + CEO가 `state.json` / `git log` / 마지막 phase를 읽고 재구성. 며칠 만에 돌아왔을 때 추천.
 - **동작**: 선택된 프로젝트 디렉토리로 들어가 CEO 세션 시동.
+- **종료 시**: 방금 띄운 claude 세션의 UUID를 찾아 다음에 똑같이 이어가는 명령어를 한 줄 안내 (`vibe resume <name> --resume <uuid>`).
 
 ### `vibe ship`
 

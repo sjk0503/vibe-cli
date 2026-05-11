@@ -49,7 +49,11 @@ export async function runNew(nameArg?: string, opts: NewOptions = {}): Promise<n
   console.log(pc.green("프로젝트 생성 완료."));
   console.log(pc.dim("이제 Claude Code (CEO)를 띄웁니다. 만들고 싶은 걸 말씀해주세요.\n"));
 
-  const exit = await spawnClaude({ cwd: dir, logDir: join(dir, VIBE_LOGS) });
+  const exit = await spawnClaude({
+    cwd: dir,
+    logDir: join(dir, VIBE_LOGS),
+    resumeHintProjectName: name,
+  });
   return exit;
 }
 
@@ -117,7 +121,11 @@ async function runAdopt(nameArg?: string): Promise<number> {
   }
   console.log(pc.dim("\n이제 CEO를 띄웁니다. 기존 코드부터 훑어달라고 부탁해보세요.\n"));
 
-  const exit = await spawnClaude({ cwd: targetDir, logDir: join(targetDir, VIBE_LOGS) });
+  const exit = await spawnClaude({
+    cwd: targetDir,
+    logDir: join(targetDir, VIBE_LOGS),
+    resumeHintProjectName: name,
+  });
   return exit;
 }
 

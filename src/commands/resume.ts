@@ -39,6 +39,7 @@ export async function runResume(nameArg?: string, opts: ResumeOptions = {}): Pro
     cwd: target.dir,
     logDir: join(target.dir, VIBE_LOGS),
     extraArgs,
+    resumeHintProjectName: target.name,
   });
 }
 

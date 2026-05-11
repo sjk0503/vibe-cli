@@ -1,5 +1,7 @@
 import { spawn, type SpawnOptions } from "node:child_process";
 import { readFileSync } from "node:fs";
+import pc from "picocolors";
+import { findLatestSessionId } from "./claude-session.js";
 import { writeLog } from "./log.js";
 import { PRESETS_CLAUDE_MD } from "./presets.js";
 
@@ -19,6 +21,11 @@ export interface SpawnClaudeOptions {
   extraArgs?: string[];
   /** Absolute path to .vibe/logs/. Errors are written here when set. */
   logDir?: string;
+  /**
+   * 주면 spawn 종료 후 `vibe resume <projectName> --resume <session-id>` 안내 한 줄 출력.
+   * 세션 ID는 ~/.claude/projects/<encoded-cwd>/*.jsonl 중 spawn 이후 갱신된 가장 최근 파일에서 추출.
+   */
+  resumeHintProjectName?: string;
 }
 
 /** vibe CEO 페르소나를 spawn 시점에 주입 (사용자 ~/.claude/CLAUDE.md 안 건드림). */
@@ -47,6 +54,7 @@ export function spawnClaude(opts: SpawnClaudeOptions = {}): Promise<number> {
   };
 
   const startedAt = new Date().toISOString();
+  const startedAtMs = Date.now();
 
   return new Promise((resolve, reject) => {
     const child = spawn("claude", args, spawnOpts);
@@ -66,9 +74,19 @@ export function spawnClaude(opts: SpawnClaudeOptions = {}): Promise<number> {
           renderMeta({ startedAt, args, cwd: opts.cwd, exit: code, signal }),
         );
       }
+      printResumeHint(opts, startedAtMs);
       resolve(code ?? 0);
     });
   });
+}
+
+function printResumeHint(opts: SpawnClaudeOptions, startedAtMs: number): void {
+  if (!opts.resumeHintProjectName || !opts.cwd) return;
+  const sessionId = findLatestSessionId(opts.cwd, startedAtMs);
+  if (!sessionId) return;
+  console.log();
+  console.log(pc.dim("↻ 이 세션 이어가려면:"));
+  console.log(`    ${pc.cyan(`vibe resume ${opts.resumeHintProjectName} --resume ${sessionId}`)}`);
 }
 
 export interface PromptClaudeOptions {
