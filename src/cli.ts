@@ -29,14 +29,14 @@ program
   .description("중단된 프로젝트를 마지막 상태에서 이어감")
   .argument("[name]", "프로젝트 이름 (생략 시 목록에서 선택)")
   .option("-c, --continue", "claude 본체의 가장 최근 대화 세션도 함께 이어감 (claude --continue)")
-  .option("--resume-session [id]", "특정 claude 세션 ID 이어감 (생략 시 picker; claude --resume)")
+  .option("--resume [id]", "특정 claude 세션 ID 이어감 (생략 시 picker; claude --resume)")
   .action(
     async (
       name: string | undefined,
-      opts: { continue?: boolean; resumeSession?: string | true },
+      opts: { continue?: boolean; resume?: string | true },
     ) =>
       process.exit(
-        await runResume(name, { continue: opts.continue, resumeSession: opts.resumeSession }),
+        await runResume(name, { continue: opts.continue, resumeId: opts.resume }),
       ),
   );
 

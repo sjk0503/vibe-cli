@@ -9,7 +9,7 @@ export interface ResumeOptions {
   /** claude --continue 패스스루: cwd의 가장 최근 대화 세션 자동 이어감. */
   continue?: boolean;
   /** claude --resume [id] 패스스루: 특정 세션 ID. true면 ID 생략(picker). */
-  resumeSession?: string | true;
+  resumeId?: string | true;
 }
 
 export async function runResume(nameArg?: string, opts: ResumeOptions = {}): Promise<number> {
@@ -27,9 +27,9 @@ export async function runResume(nameArg?: string, opts: ResumeOptions = {}): Pro
   const extraArgs: string[] = [];
   if (opts.continue) {
     extraArgs.push("--continue");
-  } else if (opts.resumeSession !== undefined) {
+  } else if (opts.resumeId !== undefined) {
     extraArgs.push("--resume");
-    if (typeof opts.resumeSession === "string") extraArgs.push(opts.resumeSession);
+    if (typeof opts.resumeId === "string") extraArgs.push(opts.resumeId);
   }
 
   const tag = extraArgs.length ? pc.dim(`  [${extraArgs.join(" ")}]`) : "";
