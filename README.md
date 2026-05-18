@@ -77,7 +77,12 @@ vibe doctor   # 환경 점검
   - 안 줬으면 → `~/dev/*` 중 `.vibe/state.json`을 가진 프로젝트들을 createdAt 내림차순으로 나열, 번호 또는 이름으로 선택
   - 목록이 1개뿐이면 자동 선택 (선택 단계 생략)
   - 목록이 비어있으면 → `재개할 vibe 프로젝트가 없습니다` + `exit 1`
-- **동작**: 선택된 프로젝트 디렉토리에서 CEO 세션 시동. CEO가 `state.json` / `git log` / 마지막 phase를 읽고 어디서부터 이어갈지 판단한다.
+- **옵션** (둘 다 선택, claude 본체 플래그 패스스루):
+  - `-c, --continue` — cwd의 가장 최근 claude **대화 세션 자체**를 그대로 이어감. 점심 먹고 와서 같은 작업 계속할 때.
+  - `--resume [id]` — 특정 claude 세션 ID로 점프 (claude CLI와 동일 시그니처). ID 생략 시 picker.
+  - 둘 다 안 주면 (기본) — **새 세션** + CEO가 `state.json` / `git log` / 마지막 phase를 읽고 재구성. 며칠 만에 돌아왔을 때 추천.
+- **동작**: 선택된 프로젝트 디렉토리로 들어가 CEO 세션 시동.
+- **종료 시**: 방금 띄운 claude 세션의 UUID를 찾아 다음에 똑같이 이어가는 명령어를 한 줄 안내 (`vibe resume <name> --resume <uuid>`).
 
 ### `vibe ship`
 

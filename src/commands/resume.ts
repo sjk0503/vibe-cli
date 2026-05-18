@@ -5,7 +5,14 @@ import { ask } from "../lib/prompt.js";
 import { listVibeProjects, type VibeProject } from "../lib/projects.js";
 import { spawnClaude } from "../lib/spawn-claude.js";
 
-export async function runResume(nameArg?: string): Promise<number> {
+export interface ResumeOptions {
+  /** claude --continue 패스스루: cwd의 가장 최근 대화 세션 자동 이어감. */
+  continue?: boolean;
+  /** claude --resume [id] 패스스루: 특정 세션 ID. true면 ID 생략(picker). */
+  resumeId?: string | true;
+}
+
+export async function runResume(nameArg?: string, opts: ResumeOptions = {}): Promise<number> {
   const projects = listVibeProjects();
   if (projects.length === 0) {
     console.log(pc.dim("재개할 vibe 프로젝트가 없습니다 (~/dev/<name>/.vibe/state.json 가 있어야 함)."));
@@ -15,9 +22,25 @@ export async function runResume(nameArg?: string): Promise<number> {
   const target = await pickProject(projects, nameArg);
   if (!target) return 1;
 
-  console.log(pc.dim(`\n  → ${target.dir}\n`));
+  // claude 본체 세션 이어가기 (--continue / --resume) 패스스루.
+  // 둘 다 주면 --continue 우선.
+  const extraArgs: string[] = [];
+  if (opts.continue) {
+    extraArgs.push("--continue");
+  } else if (opts.resumeId !== undefined) {
+    extraArgs.push("--resume");
+    if (typeof opts.resumeId === "string") extraArgs.push(opts.resumeId);
+  }
+
+  const tag = extraArgs.length ? pc.dim(`  [${extraArgs.join(" ")}]`) : "";
+  console.log(pc.dim(`\n  → ${target.dir}${tag}\n`));
   // CEO 세션이 cwd의 CLAUDE.md / state.json / git log를 읽고 어디서 이어갈지 결정.
-  return spawnClaude({ cwd: target.dir, logDir: join(target.dir, VIBE_LOGS) });
+  return spawnClaude({
+    cwd: target.dir,
+    logDir: join(target.dir, VIBE_LOGS),
+    extraArgs,
+    resumeHintProjectName: target.name,
+  });
 }
 
 async function pickProject(
