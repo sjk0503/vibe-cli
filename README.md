@@ -34,7 +34,7 @@ Claude Code 위에 얹는 얇은 CLI 래퍼. 메인 Claude 세션을 **CEO**로 
 ```bash
 git clone https://github.com/sjk0503/vibe-cli.git ~/dev/vibe
 cd ~/dev/vibe
-npm install   # postinstall 훅이 dist/를 빌드함
+npm install   # prepare 스크립트가 dist/를 빌드함
 npm link      # `vibe` 명령을 글로벌에 노출
 vibe doctor   # 환경 점검
 ```
@@ -148,7 +148,7 @@ SEO 점검 + 자동 생성 가능 항목 처리.
 - `vibe doctor update`
   - vibe 본체(이 레포)를 `origin/main` 최신으로 갱신
   - **현재 브랜치가 `main`이어야 동작** (다른 브랜치에서 강제 pull은 작업물 위험)
-  - `git pull origin main --ff-only` + `npm install` (postinstall 훅이 자동 빌드)
+  - `git pull origin main --ff-only` + `npm install` (prepare 스크립트가 자동 빌드)
   - **마지막에 `~/.claude/agents·skills/` 시스템 prompts 동기화** → 모든 vibe 프로젝트가 다음 호출부터 즉시 새 가이드 인식 (마이그 불필요)
   - `vibe doctor` 실행 시 main 브랜치 + `behind > 0`이면 한 줄 알림 (develop 작업 중이면 silent)
 
@@ -217,7 +217,7 @@ git checkout main && git merge develop && git push   # main 푸시 = 배포 트�
 - `~/dev/insight/inbox/` — md 노트, 링크, 스니펫을 분류 없이 그냥 던진다. `vibe insight organize`가 카테고리 폴더(`apis/`, `oss/`, `pitfalls/` 등)를 자율적으로 만들어준다.
 - `~/dev/design/` — 디자인 레퍼런스 (스크린샷, 무드보드 링크, 디자인 시스템 노트 등).
 
-새 프로젝트가 만들어질 때 `~/dev/insight`는 자동으로 그 프로젝트의 `.claude/skills/`에 심볼릭 링크되므로, Claude Code의 Skills 기능이 필요할 때 자동으로 트리거한다 (BLUEPRINT §13).
+vibe가 `~/.claude/skills/`에 박제하는 `insight`·`design` 스킬이 CEO에게 `~/dev/insight`·`~/dev/design`를 언제 어떻게 읽을지 안내하므로, Claude Code의 Skills 기능이 필요할 때 자동으로 트리거한다 (BLUEPRINT §13). 프로젝트마다 링크나 복사본을 두지 않는다.
 
 ---
 
@@ -232,7 +232,7 @@ git checkout main && git merge develop && git push   # main 푸시 = 배포 트�
 
 ## 지침 헬스체크 (§17.3)
 
-`vibe new`는 BLUEPRINT.md, CLAUDE.md, `.claude/agents/*.md`의 sha256을 `state.json.baseline`에 박제한다. 이후 `vibe doctor`가 변경된 파일을 CORE / PRESET 카테고리로 나눠 알려준다. 의도된 변경이면:
+`vibe new`는 `BLUEPRINT.md`의 sha256을 `state.json.baseline`에 박제한다. CLAUDE.md·에이전트 프롬프트는 `~/.claude/`에서 오므로 프로젝트 단위로 추적하지 않는다. 이후 `vibe doctor`가 변경된 파일을 CORE / PRESET 카테고리로 나눠 알려준다. 의도된 변경이면:
 
 ```bash
 vibe doctor accept
